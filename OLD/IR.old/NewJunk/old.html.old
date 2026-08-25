@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VPS Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --primary: #2f6fed;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --chip: #eef2ff;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 32px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #ffffff, #f6f8ff);
+      border: 1px solid var(--border);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .metric strong {
+      font-size: 26px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .filters label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select,
+    input[type="search"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .table-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f1f5ff;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #4b5563;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: #f9fbff;
+    }
+
+    .details-row {
+      background: #f8fafc;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .details div {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: #475569;
+    }
+
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-online {
+      background: #ecfdf3;
+      color: #15803d;
+    }
+
+    .status-offline {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .empty-state {
+      padding: 32px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .sort-indicator {
+      margin-left: 6px;
+      font-size: 12px;
+      color: var(--primary);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 20px;
+      }
+
+      th,
+      td {
+        padding: 10px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>VPS Fleet Dashboard</h1>
+      <p class="subtitle">Monitor VPS usage, sort resources, and drill into full server details.</p>
+    </div>
+    <span class="chip" id="summary-chip">0 VPS Loaded</span>
+  </header>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="card">
+    <div class="filters">
+      <label>
+        Search
+        <input type="search" id="search" placeholder="Search by hostname, IP, server name, VPS ID..." />
+      </label>
+      <label>
+        Server Group
+        <select id="server-group">
+          <option value="">All Groups</option>
+        </select>
+      </label>
+      <label>
+        Subnet
+        <select id="subnet">
+          <option value="">All Subnets</option>
+        </select>
+      </label>
+      <label>
+        Server Name
+        <select id="server-name">
+          <option value="">All Servers</option>
+        </select>
+      </label>
+      <label>
+        RAM Range
+        <select id="ram-range">
+          <option value="">Any RAM</option>
+          <option value="2-4">2-4 GB</option>
+          <option value="4-8">4-8 GB</option>
+          <option value="8-16">8-16 GB</option>
+          <option value="16+">16+ GB</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <section class="card table-card" style="margin-top: 24px;">
+    <table>
+      <thead>
+        <tr>
+          <th data-sort="status">Status</th>
+          <th data-sort="used_cpu">Used CPU</th>
+          <th data-sort="used_ram">Used RAM</th>
+          <th data-sort="used_inode">Used Inode</th>
+          <th data-sort="io_read">IO Read</th>
+          <th data-sort="io_write">IO Write</th>
+          <th data-sort="ram">RAM</th>
+          <th data-sort="cpu_cores">CPU Cores</th>
+          <th data-sort="hostname">Hostname</th>
+          <th data-sort="vpsid">VPS ID</th>
+          <th data-sort="server_name">Server Name</th>
+          <th data-sort="ip">IP</th>
+        </tr>
+      </thead>
+      <tbody id="vps-body"></tbody>
+    </table>
+    <div id="empty" class="empty-state" hidden>No VPS matched your filters.</div>
+  </section>
+
+  <script>
+    // const fallbackData = {
+    //   vps: {
+    //     "216": {
+    //       "status": "Online",
+    //       "used_cpu": "0.60",
+    //       "used_ram": 0,
+    //       "used_inode": "258575",
+    //       "io_read": 10923,
+    //       "io_write": 0,
+    //       "ram": "6144",
+    //       "vpsid": 216,
+    //       "hostname": "vmuser8221",
+    //       "os_name": "windows-2022",
+    //       "space": "30",
+    //       "cpu_cores": "2",
+    //       "nic_type": "virtio",
+    //       "mac": "00:16:3e:dc:69:8c",
+    //       "timezone": "",
+    //       "server_name": "TR04_MUV",
+    //       "email": "mh.@vebko.org",
+    //       "ips": "109.230.196.35"
+    //     }
+    //   },
+    //   ippools: {
+    //     "MUV - Turkey": [
+    //       {
+    //         "ippid": "4",
+    //         "name": "TR04-193.53.245.96/27",
+    //         "subnet": "193.53.245.96/27",
+    //         "total_ip": "29",
+    //         "free_ip": "2"
+    //       },
+    //       {
+    //         "ippid": "5",
+    //         "name": "TR05-109.230.196.0/27",
+    //         "subnet": "109.230.196.0/27",
+    //         "total_ip": "29",
+    //         "free_ip": "6"
+    //       }
+    //     ]
+    //   }
+    // };
+
+    const state = {
+      vps: [],
+      ippools: {},
+      filters: {
+        search: "",
+        group: "",
+        subnet: "",
+        serverName: "",
+        ramRange: ""
+      },
+      sort: {
+        key: "",
+        direction: "asc"
+      }
+    };
+
+    const elements = {
+      summary: document.getElementById("summary"),
+      summaryChip: document.getElementById("summary-chip"),
+      search: document.getElementById("search"),
+      group: document.getElementById("server-group"),
+      subnet: document.getElementById("subnet"),
+      serverName: document.getElementById("server-name"),
+      ramRange: document.getElementById("ram-range"),
+      vpsBody: document.getElementById("vps-body"),
+      empty: document.getElementById("empty")
+    };
+
+    const parseIps = (ips) => {
+      if (!ips) return [];
+      return ips
+        .split(/[\s,]+/)
+        .map((ip) => ip.trim())
+        .filter(Boolean);
+    };
+
+    const ipToInt = (ip) => {
+      return ip
+        .split(".")
+        .map(Number)
+        .reduce((acc, octet) => (acc << 8) + octet, 0) >>> 0;
+    };
+
+    const ipInCidr = (ip, cidr) => {
+      const [range, bits] = cidr.split("/");
+      if (!range || !bits) return false;
+      const mask = bits === "0" ? 0 : ~((1 << (32 - Number(bits))) - 1) >>> 0;
+      return (ipToInt(ip) & mask) === (ipToInt(range) & mask);
+    };
+
+    const getFirstIp = (ips) => parseIps(ips)[0] || "-";
+
+    const osBucket = (osName) => {
+      const name = (osName || "").toLowerCase();
+      if (name.includes("win")) return "windows";
+      if (name.includes("mikrotik")) return "mikrotik";
+      return "linux";
+    };
+
+    const ramInGb = (ram) => {
+      const value = Number(ram) || 0;
+      return value / 1024;
+    };
+
+    const ramMatches = (ram, range) => {
+      if (!range) return true;
+      const gb = ramInGb(ram);
+      if (range === "2-4") return gb >= 2 && gb < 4;
+      if (range === "4-8") return gb >= 4 && gb < 8;
+      if (range === "8-16") return gb >= 8 && gb < 16;
+      if (range === "16+") return gb >= 16;
+      return true;
+    };
+
+    const buildSummary = (filtered) => {
+      const totals = { windows: 0, linux: 0, mikrotik: 0 };
+      filtered.forEach((item) => {
+        totals[osBucket(item.os_name)] += 1;
+      });
+      elements.summary.innerHTML = [
+        `<div class="metric"><span>Windows</span><strong>${totals.windows}</strong></div>`,
+        `<div class="metric"><span>Linux</span><strong>${totals.linux}</strong></div>`,
+        `<div class="metric"><span>Mikrotik</span><strong>${totals.mikrotik}</strong></div>`
+      ].join("");
+    };
+
+    const buildOptions = (select, values, placeholder) => {
+      select.innerHTML = "";
+      const base = document.createElement("option");
+      base.value = "";
+      base.textContent = placeholder;
+      select.append(base);
+      values.forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value.value ?? value;
+        option.textContent = value.label ?? value;
+        select.append(option);
+      });
+    };
+
+    const updateGroupOptions = () => {
+      const groups = Object.keys(state.ippools).sort();
+      buildOptions(elements.group, groups, "All Groups");
+    };
+
+    const updateSubnetOptions = () => {
+      const group = state.filters.group;
+      const subnets = group ? state.ippools[group] || [] : Object.values(state.ippools).flat();
+      const values = subnets.map((pool) => ({
+        value: pool.subnet,
+        label: `${pool.name} (${pool.subnet})`
+      }));
+      buildOptions(elements.subnet, values, "All Subnets");
+    };
+
+    const updateServerOptions = (filtered) => {
+      const names = [...new Set(filtered.map((item) => item.server_name).filter(Boolean))].sort();
+      buildOptions(elements.serverName, names, "All Servers");
+    };
+
+    const filterByGroup = (vps, group) => {
+      if (!group) return vps;
+      const pools = state.ippools[group] || [];
+      if (!pools.length) return [];
+      return vps.filter((item) => {
+        const ips = parseIps(item.ips);
+        return ips.some((ip) => pools.some((pool) => ipInCidr(ip, pool.subnet)));
+      });
+    };
+
+    const filterBySubnet = (vps, subnet) => {
+      if (!subnet) return vps;
+      return vps.filter((item) => parseIps(item.ips).some((ip) => ipInCidr(ip, subnet)));
+    };
+
+    const applyFilters = () => {
+      const { search, group, subnet, serverName, ramRange } = state.filters;
+      let filtered = [...state.vps];
+      filtered = filterByGroup(filtered, group);
+      filtered = filterBySubnet(filtered, subnet);
+      if (serverName) {
+        filtered = filtered.filter((item) => item.server_name === serverName);
+      }
+      filtered = filtered.filter((item) => ramMatches(item.ram, ramRange));
+      if (search) {
+        const needle = search.toLowerCase();
+        filtered = filtered.filter((item) => {
+          const haystack = [
+            item.hostname,
+            item.vpsid,
+            item.server_name,
+            item.os_name,
+            item.ips
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(needle);
+        });
+      }
+      return filtered;
+    };
+
+    const sortRows = (rows) => {
+      const { key, direction } = state.sort;
+      if (!key) return rows;
+      const dir = direction === "asc" ? 1 : -1;
+      return rows.sort((a, b) => {
+        const valueA = key === "ip" ? getFirstIp(a.ips) : a[key];
+        const valueB = key === "ip" ? getFirstIp(b.ips) : b[key];
+        if (typeof valueA === "string" && typeof valueB === "string") {
+          return valueA.localeCompare(valueB) * dir;
+        }
+        return (Number(valueA) - Number(valueB)) * dir;
+      });
+    };
+
+    const formatNumber = (value) => {
+      if (value === null || value === undefined || value === "") return "-";
+      return value;
+    };
+
+    const renderRows = (rows) => {
+      elements.vpsBody.innerHTML = "";
+      if (!rows.length) {
+        elements.empty.hidden = false;
+        return;
+      }
+      elements.empty.hidden = true;
+      rows.forEach((item, index) => {
+        const statusClass = item.status?.toLowerCase() === "online" ? "status-online" : "status-offline";
+        const mainRow = document.createElement("tr");
+        mainRow.innerHTML = `
+          <td><span class="status-pill ${statusClass}">${item.status || "Unknown"}</span></td>
+          <td>${formatNumber(item.used_cpu)}</td>
+          <td>${formatNumber(item.used_ram)}</td>
+          <td>${formatNumber(item.used_inode)}</td>
+          <td>${formatNumber(item.io_read)}</td>
+          <td>${formatNumber(item.io_write)}</td>
+          <td>${formatNumber(item.ram)}</td>
+          <td>${formatNumber(item.cpu_cores)}</td>
+          <td>${formatNumber(item.hostname)}</td>
+          <td>${formatNumber(item.vpsid)}</td>
+          <td>${formatNumber(item.server_name)}</td>
+          <td>${formatNumber(getFirstIp(item.ips))}</td>
+        `;
+        const detailsRow = document.createElement("tr");
+        detailsRow.classList.add("details-row");
+        detailsRow.hidden = true;
+        const detailsCell = document.createElement("td");
+        detailsCell.colSpan = 12;
+        const detailWrap = document.createElement("div");
+        detailWrap.className = "details";
+        Object.entries(item).forEach(([key, value]) => {
+          const block = document.createElement("div");
+          block.innerHTML = `<strong>${key}</strong><br />${value === "" ? "-" : value}`;
+          detailWrap.append(block);
+        });
+        detailsCell.append(detailWrap);
+        detailsRow.append(detailsCell);
+        mainRow.addEventListener("click", () => {
+          detailsRow.hidden = !detailsRow.hidden;
+        });
+        elements.vpsBody.append(mainRow, detailsRow);
+      });
+    };
+
+    const updateSortIndicators = () => {
+      document.querySelectorAll("th[data-sort]").forEach((th) => {
+        const key = th.dataset.sort;
+        const existing = th.querySelector(".sort-indicator");
+        if (existing) existing.remove();
+        if (state.sort.key === key) {
+          const indicator = document.createElement("span");
+          indicator.className = "sort-indicator";
+          indicator.textContent = state.sort.direction === "asc" ? "▲" : "▼";
+          th.append(indicator);
+        }
+      });
+    };
+
+    const render = () => {
+      const filtered = applyFilters();
+      const sorted = sortRows(filtered);
+      updateServerOptions(filtered);
+      buildSummary(filtered);
+      renderRows(sorted);
+      elements.summaryChip.textContent = `${filtered.length} VPS Loaded`;
+      updateSortIndicators();
+    };
+
+    const handleFilters = () => {
+      state.filters = {
+        search: elements.search.value.trim(),
+        group: elements.group.value,
+        subnet: elements.subnet.value,
+        serverName: elements.serverName.value,
+        ramRange: elements.ramRange.value
+      };
+      updateSubnetOptions();
+      render();
+    };
+
+    const attachEvents = () => {
+      [elements.search, elements.group, elements.subnet, elements.serverName, elements.ramRange].forEach((el) => {
+        el.addEventListener("input", handleFilters);
+        el.addEventListener("change", handleFilters);
+      });
+      document.querySelectorAll("th[data-sort]").forEach((th) => {
+        th.addEventListener("click", () => {
+          const key = th.dataset.sort;
+          if (state.sort.key === key) {
+            state.sort.direction = state.sort.direction === "asc" ? "desc" : "asc";
+          } else {
+            state.sort.key = key;
+            state.sort.direction = "asc";
+          }
+          render();
+        });
+      });
+    };
+
+    const loadData = async () => {
+      try {
+        const [vpsRes, ippoolsRes] = await Promise.all([fetch("vps.json"), fetch("ippools.json")]);
+        if (!vpsRes.ok || !ippoolsRes.ok) {
+          throw new Error("Missing data files");
+        }
+        const vpsData = await vpsRes.json();
+        const ippoolsData = await ippoolsRes.json();
+        state.vps = Object.values(vpsData);
+        state.ippools = ippoolsData;
+      } catch (error) {
+        state.vps = Object.values(fallbackData.vps);
+        state.ippools = fallbackData.ippools;
+      }
+    };
+
+    const init = async () => {
+      await loadData();
+      updateGroupOptions();
+      updateSubnetOptions();
+      attachEvents();
+      render();
+    };
+
+    init();
+  </script>
+</body>
+</html>

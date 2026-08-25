@@ -1,0 +1,36 @@
+<?php
+require_once('admin.php');
+
+$key = 'Hfrwq1PL7HhfWBKIJGq29RCjC4cJgY1lP';
+$pass = 'ldPYRRTzI0pJ08aYnYatmYexj0d4XVxP';
+$ip = '45.129.39.116';
+$port = '4084';
+
+
+
+$admin = new Virtualizor_Admin_API($ip, $key, $pass ,$port);
+
+
+
+$listVPS = $admin->listvs();
+
+if (empty($listVPS)) {
+    die("CRITICAL: The API returned a totally empty response. Check Firewall/IP Whitelist.");
+}
+
+if (isset($listVPS['error'])) {
+    echo "API ERROR: ";
+    print_r($listVPS['error']);
+    die();
+}
+
+// This will show us the actual keys available
+echo "Available keys in response: " . implode(', ', array_keys($listVPS)) . "\n";
+
+if (!isset($listVPS['vs'])) {
+    echo "DEBUG: 'vs' key not found. Printing full response for inspection:\n";
+    #print_r($listVPS);
+    die();
+}
+
+?>

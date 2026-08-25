@@ -1,0 +1,84 @@
+CREATE DATABASE IF NOT EXISTS FRvpsInfo;
+USE FRvpsInfo;
+
+-- Live snapshot for every 15 mins
+CREATE TABLE vps_snapshots (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    vpsid INT,
+    hostname VARCHAR(255),
+    status VARCHAR(50),
+    used_cpu DECIMAL(10,2),
+    used_ram INT,
+    used_inode VARCHAR(50),
+    io_read INT,
+    io_write INT,
+    ram INT,
+    os_name VARCHAR(100),
+    space INT,
+    cpu_cores INT,
+    nic_type VARCHAR(50),
+    mac VARCHAR(50),
+    timezone VARCHAR(50),
+    server_name VARCHAR(255),
+    email VARCHAR(255),
+    ips TEXT,
+    all_ips TEXT,
+    location VARCHAR(100),
+    creation_date_shamsi VARCHAR(50),
+    edit_date_shamsi VARCHAR(50),
+    saved_at VARCHAR(50),
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE ippool_snapshots (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ippid INT,
+    name VARCHAR(255),
+    location VARCHAR(100),
+    subnet VARCHAR(100),
+    total_ip INT,
+    free_ip INT,
+    saved_at VARCHAR(50),
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- History tables for 12 parts/day (Hourly)
+CREATE TABLE vps_hourly_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    vpsid INT,
+    hostname VARCHAR(255),
+    status VARCHAR(50),
+    used_cpu DECIMAL(10,2),
+    used_ram INT,
+    used_inode VARCHAR(50),
+    io_read INT,
+    io_write INT,
+    ram INT,
+    os_name VARCHAR(100),
+    space INT,
+    cpu_cores INT,
+    nic_type VARCHAR(50),
+    mac VARCHAR(50),
+    timezone VARCHAR(50),
+    server_name VARCHAR(255),
+    email VARCHAR(255),
+    ips TEXT,
+    all_ips TEXT,
+    location VARCHAR(100),
+    creation_date_shamsi VARCHAR(50),
+    edit_date_shamsi VARCHAR(50),
+    saved_at VARCHAR(50),
+    recorded_at TIMESTAMP
+);
+
+CREATE TABLE ippool_hourly_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ippid INT,
+    name VARCHAR(255),
+    location VARCHAR(100),
+    subnet VARCHAR(100),
+    total_ip INT,
+    free_ip INT,
+    saved_at VARCHAR(50),
+    recorded_at TIMESTAMP
+);

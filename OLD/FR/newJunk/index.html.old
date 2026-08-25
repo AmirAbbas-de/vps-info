@@ -1,0 +1,368 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPS Dashboard</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+}
+#filters {
+margin-bottom: 20px;
+}
+select, input {
+margin-right: 10px;
+padding: 5px;
+}
+table {
+border-collapse: collapse;
+width: 100%;
+}
+th, td {
+border: 1px solid #ddd;
+padding: 8px;
+text-align: left;
+}
+th {
+background-color: #f2f2f2;
+}
+tr:hover {
+background-color: #f5f5f5;
+cursor: pointer;
+}
+#modal {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background-color: white;
+padding: 20px;
+border: 1px solid #ccc;
+box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+z-index: 1000;
+max-width: 80%;
+max-height: 80%;
+overflow: auto;
+}
+#modal ul {
+list-style-type: none;
+padding: 0;
+}
+#modal li {
+margin-bottom: 5px;
+}
+</style>
+</head>
+<body>
+<h1>VPS Dashboard</h1>
+<div id="filters">
+<input type="text" id="search" placeholder="Search anything...">
+<select id="group">
+<option value="">All Server Groups</option>
+</select>
+<select id="subnet">
+<option value="">All Subnets</option>
+</select>
+<select id="server_name">
+<option value="">All Server Names</option>
+</select>
+<select id="os_type">
+<option value="">All OS Types</option>
+<option value="windows">Windows</option>
+<option value="mikrotik">Mikrotik</option>
+<option value="linux">Linux</option>
+</select>
+<select id="ram">
+<option value="">All RAM</option>
+</select>
+</div>
+<table id="vps_table">
+<thead>
+<tr>
+<th>Status</th>
+<th>Used CPU</th>
+<th>Used RAM</th>
+<th>Used Inode</th>
+<th>IO Read</th>
+<th>IO Write</th>
+<th>RAM</th>
+<th>CPU Cores</th>
+<th>Hostname</th>
+<th>VPS ID</th>
+<th>Server Name</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<div id="modal" style="display: none;"></div>
+    <script>
+        const vps = [
+    {
+        "status": 2,
+        "used_cpu": "0.00",
+        "used_ram": 0,
+        "used_inode": "298",
+        "io_read": 0,
+        "io_write": 0,
+        "ram": "256",
+        "vpsid": 177,
+        "hostname": "vmuser1173",
+        "os_name": "mikrotik-6-x86",
+        "space": "1",
+        "cpu_cores": "1",
+        "nic_type": "e1000",
+        "mac": "00:16:3e:e9:3c:0e",
+        "timezone": "",
+        "server_name": "MIX04_RDST",
+        "email": "mh.3pehr3p@gmail.com",
+        "ips": "185.179.216.153"
+    },
+    {
+        "status": 1,
+        "used_cpu": "1.40",
+        "used_ram": 0,
+        "used_inode": "258575",
+        "io_read": 0,
+        "io_write": "25941",
+        "ram": "6144",
+        "vpsid": 216,
+        "hostname": "vmuser8221",
+        "os_name": "windows-2022",
+        "space": "30",
+        "cpu_cores": "2",
+        "nic_type": "virtio",
+        "mac": "00:16:3e:dc:69:8c",
+        "timezone": "",
+        "server_name": "TR04_MUV",
+        "email": "mh.@vebko.org",
+        "ips": "109.230.196.35"
+    }
+];
+
+        const ippools = {
+    "HostKEY - Netherland": [
+        {
+            "ippid": "50",
+            "name": "WS-191.101.113.0/24",
+            "subnet": "191.101.113.0/24",
+            "gateway": "191.101.113.1",
+            "netmask": "255.255.255.0",
+            "total_ip": "251",
+            "free_ip": "161"
+        },
+        {
+            "ippid": "77",
+            "name": "WS-81.22.134.0/24",
+            "subnet": "81.22.134.0/24",
+            "gateway": "81.22.134.1",
+            "netmask": "255.255.255.0",
+            "total_ip": "240",
+            "free_ip": 0
+        },
+        {
+            "ippid": "94",
+            "name": "NL - HK -46.183.31.0/24",
+            "subnet": "46.183.31.0/24",
+            "gateway": "46.183.31.1",
+            "netmask": "255.255.255.0",
+            "total_ip": "155",
+            "free_ip": "155"
+        },
+        {
+            "ippid": "95",
+            "name": "NL - HK - 141.11.0.0/24",
+            "subnet": "141.11.0.0/24",
+            "gateway": "141.11.0.1",
+            "netmask": "255.255.255.0",
+            "total_ip": "251",
+            "free_ip": "82"
+        }
+    ],
+    "M247 - UAE": [
+        {
+            "ippid": "51",
+            "name": "PM-185.135.156.0/25",
+            "subnet": "185.135.156.0/25",
+            "gateway": "185.135.156.1",
+            "netmask": "255.255.255.128",
+            "total_ip": "125",
+            "free_ip": "12"
+        },
+        {
+            "ippid": "53",
+            "name": "PM-185.135.156.128/26",
+            "subnet": "185.135.156.128/26",
+            "gateway": "185.135.156.129",
+            "netmask": "255.255.255.192",
+            "total_ip": "61",
+            "free_ip": "6"
+        }
+    ]
+};
+
+        // Assign os_type to each VPS
+        vps.forEach(v => {
+            if (v.os_name.includes('windows')) {
+                v.os_type = 'windows';
+            } else if (v.os_name.includes('mikrotik')) {
+                v.os_type = 'mikrotik';
+            } else {
+                v.os_type = 'linux';
+            }
+        });
+
+        // Populate server groups
+        const groupSelect = document.getElementById('group');
+        for (let group in ippools) {
+            const option = document.createElement('option');
+            option.value = group;
+            option.textContent = group;
+            groupSelect.appendChild(option);
+        }
+
+        // Populate server names
+        const uniqueServerNames = [...new Set(vps.map(v => v.server_name))].sort();
+        const serverSelect = document.getElementById('server_name');
+        uniqueServerNames.forEach(server => {
+            const option = document.createElement('option');
+            option.value = server;
+            option.textContent = server;
+            serverSelect.appendChild(option);
+        });
+
+        // Populate RAM options
+        const uniqueRams = [...new Set(vps.map(v => v.ram))].sort((a, b) => parseInt(a) - parseInt(b));
+        const ramSelect = document.getElementById('ram');
+        uniqueRams.forEach(ram => {
+            const option = document.createElement('option');
+            option.value = ram;
+            option.textContent = ram + ' MB';
+            ramSelect.appendChild(option);
+        });
+
+        // Event listeners for filters
+        document.getElementById('group').addEventListener('change', updateSubnetsAndFilter);
+        ['search', 'subnet', 'server_name', 'os_type', 'ram'].forEach(id => {
+            const eventType = id === 'search' ? 'input' : 'change';
+            document.getElementById(id).addEventListener(eventType, filterTable);
+        });
+
+        function updateSubnetsAndFilter() {
+            updateSubnets();
+            filterTable();
+        }
+
+        function updateSubnets() {
+            const group = document.getElementById('group').value;
+            const subnetSelect = document.getElementById('subnet');
+            subnetSelect.innerHTML = '<option value="">All Subnets</option>';
+            if (group && ippools[group]) {
+                ippools[group].forEach(pool => {
+                    const option = document.createElement('option');
+                    option.value = pool.subnet;
+                    option.textContent = `${pool.name} (${pool.subnet})`;
+                    subnetSelect.appendChild(option);
+                });
+            }
+        }
+
+        function filterTable() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const group = document.getElementById('group').value;
+            const subnet = document.getElementById('subnet').value;
+            const serverName = document.getElementById('server_name').value;
+            const osType = document.getElementById('os_type').value;
+            const ram = document.getElementById('ram').value;
+
+            let filteredVps = vps.filter(v => {
+                if (search === '') return true;
+                return Object.values(v).some(value => String(value).toLowerCase().includes(search));
+            });
+
+            if (group) {
+                filteredVps = filteredVps.filter(v => {
+                    return ippools[group].some(pool => isInSubnet(v.ips, pool.subnet));
+                });
+            }
+
+            if (subnet) {
+                filteredVps = filteredVps.filter(v => isInSubnet(v.ips, subnet));
+            }
+
+            if (serverName) {
+                filteredVps = filteredVps.filter(v => v.server_name === serverName);
+            }
+
+            if (osType) {
+                filteredVps = filteredVps.filter(v => v.os_type === osType);
+            }
+
+            if (ram) {
+                filteredVps = filteredVps.filter(v => v.ram === ram);
+            }
+
+            populateTable(filteredVps);
+        }
+
+        function populateTable(filteredVps) {
+            const tbody = document.querySelector('#vps_table tbody');
+            tbody.innerHTML = '';
+            filteredVps.forEach(v => {
+                const tr = document.createElement('tr');
+                ['status', 'used_cpu', 'used_ram', 'used_inode', 'io_read', 'io_write', 'ram', 'cpu_cores', 'hostname', 'vpsid', 'server_name'].forEach(key => {
+                    const td = document.createElement('td');
+                    td.textContent = v[key];
+                    tr.appendChild(td);
+                });
+                tr.addEventListener('click', () => showDetails(v));
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showDetails(v) {
+            const modal = document.getElementById('modal');
+            modal.innerHTML = 'VPS Details';
+            const ul = document.createElement('ul');
+            for (let key in v) {
+                const li = document.createElement('li');
+                li.textContent = `${key}: ${v[key]}`;
+                ul.appendChild(li);
+            }
+            modal.appendChild(ul);
+
+            modal.style.display = 'block';
+
+            const closeIfOutside = (e) => {
+                if (!modal.contains(e.target)) {
+                    closeModal();
+                }
+            };
+
+            document.addEventListener('click', closeIfOutside);
+
+            function closeModal() {
+                document.removeEventListener('click', closeIfOutside);
+                modal.style.display = 'none';
+            }
+        }
+
+        // IP utility functions
+        function ipToInt(ip) {
+            return ip.split('.').reduce((acc, part) => (acc << 8) + parseInt(part, 10), 0) >>> 0;
+        }
+
+        function isInSubnet(ip, cidr) {
+            const [network, prefixStr] = cidr.split('/');
+            const prefix = parseInt(prefixStr, 10);
+            const mask = (0xffffffff << (32 - prefix)) >>> 0;
+            const ipNum = ipToInt(ip);
+            const netNum = ipToInt(network);
+            return (ipNum & mask) === (netNum & mask);
+        }
+
+        // Initial population
+        updateSubnets();
+        filterTable();
+    </script>
+</body>
+</html>
