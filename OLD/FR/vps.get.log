@@ -1,7 +1,0 @@
-=== Run started at 2026-02-23 13:13:47 ===
-Traceback (most recent call last):
-  File "/var/www/html/FR/vps.py", line 6, in <module>
-    from virtvs import virtapi
-  File "/var/www/html/FR/virtvs.py", line 6, in <module>
-    import phpserialize
-ModuleNotFoundError: No module named 'phpserialize'
