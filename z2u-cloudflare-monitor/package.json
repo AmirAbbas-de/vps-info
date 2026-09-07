@@ -1,0 +1,25 @@
+{
+  "name": "z2u-telegram-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Workers Telegram bot that monitors Z2U search pages.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply z2u-monitor --local",
+    "db:migrate:remote": "wrangler d1 migrations apply z2u-monitor --remote",
+    "db:seed-remote": "wrangler d1 execute z2u-monitor --remote --file=./migrations/0002_seed.sql",
+    "webhook:setup": "node ./scripts/setup-telegram-webhook.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260903.1",
+    "@types/node": "^22.10.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8",
+    "wrangler": "^4.12.1"
+  }
+}

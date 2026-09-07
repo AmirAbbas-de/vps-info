@@ -1,0 +1,37 @@
+# Cloudflare Workers configuration for the Z2U Telegram monitor.
+#
+# Replace DATABASE_PLACEHOLDER_ID with the real D1 database id after running:
+#   npx wrangler d1 create z2u-monitor
+#
+# Never put secrets (TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET,
+# TELEGRAM_ALLOWED_USER_IDS) in this file.
+
+name = "z2u-monitor"
+main = "src/index.ts"
+compatibility_date = "2026-09-07"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "z2u-monitor"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+migrations_dir = "migrations"
+
+[vars]
+# Non-secret configuration. These are public/operational knobs only.
+CHECK_INTERVAL_MINUTES = "5"
+Z2U_REQUEST_TIMEOUT_MS = "15000"
+Z2U_RETRIES = "2"
+MAX_MONITORS_PER_CRON_RUN = "3"
+MAX_Z2U_PAGES = "1"
+LOG_LEVEL = "info"
+# When true, the worker regenerates the Z2U opaque search parameter with a
+# fresh expiry instead of reusing the (potentially expired) seeded URL.
+Z2U_REFRESH_EXPIRY = "true"
+Z2U_EXPIRY_WINDOW_MINUTES = "1440"
+
+# Optional: send bot notifications to this exact Telegram chat id instead of
+# every authorized user. Leave unset to use TELEGRAM_ALLOWED_USER_IDS.
+# TELEGRAM_CHAT_ID = ""
